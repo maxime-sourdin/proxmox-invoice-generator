@@ -8,7 +8,6 @@ from dateutil.relativedelta import relativedelta
 from InvoiceGenerator.api import Invoice, Item, Client, Provider, Creator
 from InvoiceGenerator.pdf import SimpleInvoice
 
-# choose english as language
 
 def generate_invoice(client,provider_name,filename,date, host, user, password):
     os.environ["INVOICE_LANG"] = "fr"
@@ -60,8 +59,6 @@ def generate_invoice(client,provider_name,filename,date, host, user, password):
                 invoice.add_item(Item(vm_storage,0.04, description=description, unit="GB", tax=0))   
                 description = vm_id + " - " + vm_name  + " - CONSUMPTION"                    
                 invoice.add_item(Item(vm_consumption,0.00015, description=description, unit='W', tax=0)) 
-
-
     generate_pdf(invoice,filename)
 
 def generate_pdf(invoice, filename):
@@ -71,10 +68,10 @@ def generate_pdf(invoice, filename):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--client", required=False, type=str, default="Maxime SOURDIN")
-    parser.add_argument("--provider_name", required=False, type=str, default="SOURDIN")
+    parser.add_argument("--client", required=False, type=str, default="Client")
+    parser.add_argument("--provider_name", required=False, type=str, default="Provider")
     parser.add_argument("--filename", required=False, type=str, help='Euro', default="invoice.pdf")
-    parser.add_argument("--host", required=False, type=str, help='IP or Hostname', default="172.16.3.3")
+    parser.add_argument("--host", required=False, type=str, help='IP or Hostname', default="192.168.1.1")
     parser.add_argument("--user", required=False, type=str, help='root@pam', default="root@pam")        
     default_date = datetime.now()-relativedelta(months=1)
     default_date = default_date.strftime("%Y%m")

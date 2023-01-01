@@ -1,7 +1,9 @@
 # proxmox-invoice-generator
 
 ## How to use it
+
 ### Args
+
 This script took multiple arg:
 
   - client: Name of the client
@@ -13,4 +15,5 @@ This script took multiple arg:
     
 ### Example
 
-    export PROXMOX_PASSWORD="heavyweather" billings.py --client ME --provider_name YOU --date 202212 --filename invoice.pdf --host 192.168.1.1 --user root@pam
+    pip3 install -r requirements.txt
+    export PROXMOX_PASSWORD="heavyweather" python3 billings.py --client ME --provider_name YOU --date 202212 --filename invoice.pdf --host 192.168.1.1 --user root@pam
