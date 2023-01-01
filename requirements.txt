@@ -1,0 +1,5 @@
+InvoiceGenerator==1.1.0
+proxmoxer==2.0.1
+qrcode==7.3.1
+requests==2.28.1
+openssh-wrapper==0.4
