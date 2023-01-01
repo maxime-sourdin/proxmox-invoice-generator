@@ -1,9 +1,6 @@
-import os, argparse, openssh_wrapper
+import os, argparse
 from proxmoxer import ProxmoxAPI
-from tempfile import NamedTemporaryFile
 from datetime import datetime
-from requests.structures import CaseInsensitiveDict
-from http.client import HTTPConnection
 from dateutil.relativedelta import relativedelta
 from InvoiceGenerator.api import Invoice, Item, Client, Provider, Creator
 from InvoiceGenerator.pdf import SimpleInvoice
@@ -11,16 +8,20 @@ from InvoiceGenerator.pdf import SimpleInvoice
 
 def generate_invoice(client,provider_name,filename,date, host, user, password):
     os.environ["INVOICE_LANG"] = "fr"
-    # 730 hours per month =  2628000
-    seconds_per_month = 2628000
     client = Client(client)
     provider = Provider(summary=provider_name,bank_account='000000000', bank_code='0000')
     creator = Creator(provider_name)
-
     invoice = Invoice(client, provider, creator)
     invoice.number = date
     invoice.currency = u'\u20ac'
     invoice.currency_locale = 'fr_FR.UTF-8'
+    get_proxmox_data(host,user,password,invoice)
+    pdf = SimpleInvoice(invoice)
+    pdf.gen(filename, generate_qr_code=False)
+
+def get_proxmox_data(host,user,password,invoice):
+    # 730 hours per month =  2628000
+    seconds_per_month = 2628000
     proxmox = ProxmoxAPI(
         host, user=user, password=password, verify_ssl=False
     )
@@ -47,24 +48,20 @@ def generate_invoice(client,provider_name,filename,date, host, user, password):
                 vm_storage = vm["maxdisk"]
                 vm_storage = (vm_storage / 1024 / 1024 / 1024)
                 vm_consumption = (vm_uptime / node_tdp) * node_tdp
-                description = vm_id + " - " + vm_name + " - CPU"                        
-                invoice.add_item(Item(vm_cpu, 7, description=description, unit="CPU"))
-                description = vm_id + " - " + vm_name  + " - RAM"                    
-                invoice.add_item(Item(vm_ram, 7, description=description, unit="GB"))
-                description = vm_id + " - " + vm_name  + " - NETOUT"                    
-                invoice.add_item(Item(vm_netout,0.01, description=description, unit="GB", tax=0))
-                description = vm_id + " - " + vm_name  + " - NETIN"                    
-                invoice.add_item(Item(vm_netin,0.01, description=description, unit="GB", tax=0))
-                description = vm_id + " - " + vm_name  + " - STORAGE"                    
-                invoice.add_item(Item(vm_storage,0.04, description=description, unit="GB", tax=0))   
-                description = vm_id + " - " + vm_name  + " - CONSUMPTION"                    
-                invoice.add_item(Item(vm_consumption,0.00015, description=description, unit='W', tax=0)) 
-    generate_pdf(invoice,filename)
+                description = vm_id + " - " + vm_name + " - CPU"
+                add_item(invoice,vm_cpu,7,description,"CPU",0)
+                description = vm_id + " - " + vm_name  + " - RAM"
+                add_item(invoice,vm_ram,7,description,"GB",0)
+                description = vm_id + " - " + vm_name  + " - NETOUT"
+                add_item(invoice,vm_netout,0.01,description,"GB",0)   
+                description = vm_id + " - " + vm_name  + " - NETIN"   
+                add_item(invoice,vm_netin,0.01,description,"GB",0)   
+                description = vm_id + " - " + vm_name  + " - STORAGE"   
+                add_item(invoice,vm_consumption,0.00015,description,"W",0)   
+                description = vm_id + " - " + vm_name  + " - CONSUMPTION"
 
-def generate_pdf(invoice, filename):
-    pdf = SimpleInvoice(invoice)
-    pdf.gen(filename, generate_qr_code=False)
-
+def add_item(invoice,item,price,description,unit,tax):
+    invoice.add_item(Item(item,price,description,unit,tax))
 
 def main():
     parser = argparse.ArgumentParser()
